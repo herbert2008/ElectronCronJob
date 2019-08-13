@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Hello World!</title>
+    <script>
+        var jobManage = require('./JobManage');
+        const { ipcRenderer } = require('electron')
+
+      //创建任务
+      function createCron(){
+        var deviceList = [];
+          deviceList.push({
+              forword: "api.919992.com",
+              sn: "fsdf45"
+          });
+          var args = {};
+          args.name = { execMode: 1, execIndex: 0, limitNum: 0, values: ["张三", "李四", "王二", "麻子", "酒桶"] };
+          args.age = { execMode: 2, execIndex: 0, limitNum: 0, values: [18, 20, 22, 24, 26] };
+          args.tag = { execMode: 1, execIndex: 0, limitNum: 4, values: ["90后", "帅气", "乐观", "胖子", "瘦子", "文静", "爱笑"] };
+          args.skills = { execMode: 2, execIndex: 0, limitNum: 3, values: ["js", "c#", "java", "大数据", "人工智能"] };
+          //jobManage.CreateJob(i,'任务-'+i,1,5,deviceList,'code',args,'*/20 * * * * *',  true);
+          var now = new Date().Format('yyyyMMddhhmmss');
+          var param = {
+              id: now,
+              name: '任务-' + now,
+              totalCount: 5,
+              execCount: 0,
+              devices: deviceList,
+              code: 'code',
+              args: args,
+              cron: '0 */1 * * * *',
+              runOnInit: true,
+              sleepTime: [{
+                  startTime: '00:00:00',
+                  endTime: '03:59:59'
+              }, {
+                  startTime: '00:00:00',
+                  endTime: '03:59:59'
+              }
+              ],
+              jobBeginTime: '2019-07-31 10:20:00',
+              jobEndTime: '2020-07-31 10:20:00',
+              interval: 1
+          };
+          ipcRenderer.sendSync('createJob', param);
+          getAllCron();
+      }
+
+      function getAllCron(){
+        var txt='';
+        var allJob = ipcRenderer.sendSync('getAllJob');
+        allJob.forEach(function(value,index,array){
+          var jobStatus='';
+          let now=new Date();
+          let beginTime=new Date(value.jobBeginTime.replace(/-/g, "/"));
+          if(beginTime>now){
+              jobStatus='未开始';
+          }
+          if(jobStatus==''){
+            if(value.finished){
+              jobStatus='已结束';
+            }else{
+              if(!value.cronJob.running){
+                jobStatus='暂停';
+              }else{
+                jobStatus='进行中';
+              }
+            }
+          }
+          txt=txt+'任务名：'+value.name+';任务起止时间：'+value.jobBeginTime+'-'+value.jobEndTime+';执行次数：'+value.execCount+'/'+value.totalCount
+          +'目标云机'+value.devices.length+';任务状态：'+jobStatus+';执行日志：'+value.joblog;
+          txt=txt+'\r\n';
+        });
+        document.getElementById("joblist").innerText=txt;
+      }
+
+      function startCron(){
+        var id=document.getElementById("jid").value;
+        ipcRenderer.sendSync('startJob',id);
+        getAllCron();
+      }
+
+      function stopCron(){
+        var id=document.getElementById("jid").value;
+        ipcRenderer.sendSync('stopJob',id);
+        getAllCron();
+      }
+
+      function finishCron(){
+        var id=document.getElementById("jid").value;
+        ipcRenderer.sendSync('finishJob',id);
+        getAllCron();
+      }
+
+      function deleteCron(){
+        var id=document.getElementById("jid").value;
+        ipcRenderer.sendSync('deleteJob',id);
+        getAllCron();
+      }
+
+      function initJob(){
+        ipcRenderer.sendSync('initJob');
+        getAllCron();
+      }
+
+      function clearJob(){
+        ipcRenderer.sendSync('clearJob');
+        getAllCron();
+      }
+
+      ipcRenderer.on('refreshJob', (event, arg) => {
+        console.log('refreshJob');
+        getAllCron();
+      });
+
+      function Test(){
+        var arg = {
+          "name": "manzi",
+          "age": 29,
+          "skills": ["js", "c#", "java"]
+        };
+        var arg1={};
+        for (var prop in arg) {
+            console.log(prop);
+            console.log(arg[prop]);
+            arg1[prop]=arg[prop];
+        }
+        var a=0;
+      }
+    </script>
+    <style>
+      
+    </style> 
+  </head>
+  <body>
+    <h1>Hello World!</h1>
+    We are using node <script>document.write(process.versions.node)</script>,
+    Chrome <script>document.write(process.versions.chrome)</script>,
+    and Electron <script>document.write(process.versions.electron)</script>.
+
+    <div id="d1"></div>
+    <button onclick="initJob()">从文件加载任务</button>
+    <button onclick="createCron()">添加定时任务（每20秒）</button>
+    <button onclick="getAllCron()">获取所有定时任务</button>
+    <button onclick="clearJob()">清空任务</button><br>
+    id:<input type="text" id="jid" ><br>
+    <button onclick="startCron()">开始任务</button>
+    <button onclick="stopCron()">暂停任务</button>
+    <button onclick="finishCron()">停止任务</button>
+    <button onclick="deleteCron()">删除任务</button>
+
+    <button onclick="Test()">测试</button><br>
+    <textarea rows="10" cols="100" id="joblist">
+      
+      </textarea>
+  </body>
+</html>
