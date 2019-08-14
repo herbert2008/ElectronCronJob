@@ -191,9 +191,47 @@ module.exports.GetCount=function(){
     return global.JobTable.getSize();
 };
 
-module.exports.GetAllJobs=function(){
-    return global.JobTable.getValues();
-};
+//module.exports.GetAllJobs=function(){
+//    return global.JobTable.getValues();
+//};
+
+//获取任务信息字段
+module.exports.GetAllJobs = function () {
+    var result = [];
+    global.JobTable.getValues().forEach((item, index, array) => {
+        let jobStatus = '';
+        let now = new Date();
+        let beginTime = new Date(item.jobBeginTime.replace(/-/g, "/"));
+        if (beginTime > now) {
+            jobStatus = '未开始';
+        }
+        if (jobStatus == '') {
+            if (item.finished) {
+                jobStatus = '已结束';
+            } else {
+                if (!item.cronJob.running) {
+                    jobStatus = '暂停';
+                } else {
+                    jobStatus = '进行中';
+                }
+            }
+        }
+        let job = { 
+            id: item.id, 
+            name: item.name, 
+            cron: item.cron,
+            jobBeginTime: item.jobBeginTime, 
+            jobEndTime: item.jobEndTime, 
+            execCount: item.execCount, 
+            totalCount: item.totalCount,
+            devices: item.devices,
+            jobStatus: jobStatus,
+            joblog: item.joblog            
+        };
+        result.push(job);
+    })
+    return result;
+}
 
 //清空所有任务
 module.exports.Clear = function () {
@@ -352,7 +390,7 @@ var exec = function (id) {
                             params.cronJob.stop();
                             params.runOnInit = false;
                             params.finished = true;
-                            params.joblog = "任务执行结束(参数["+prop+"]无可用值)";
+                            params.joblog = generateLogStr("任务执行结束(参数["+prop+"]无可用值)");
                             syncJobFile(id);
                             addJobLog(id, params.joblog);
                             event.emit('refreshJob');   //发出事件
@@ -371,7 +409,7 @@ var exec = function (id) {
                         params.cronJob.stop();
                         params.runOnInit = false;
                         params.finished = true;
-                        params.joblog = "任务执行结束(参数["+prop+"]无可用值)";
+                        params.joblog = generateLogStr("任务执行结束(参数["+prop+"]无可用值)");
                         syncJobFile(id);
                         addJobLog(id, params.joblog);
                         event.emit('refreshJob');   //发出事件
@@ -420,11 +458,15 @@ var exec = function (id) {
         params.execCount++;
 
         var joblog = generateLogStr('正在执行第' + params.execCount + '条，参数' + JSON.stringify(execArg));
+        addJobLog(id, joblog);
         if (params.execCount >= params.totalCount) {
             params.cronJob.stop();
             params.runOnInit = false;
             params.finished = true;
-            joblog = "任务执行结束";
+            joblog = generateLogStr("任务执行结束");
+            setTimeout(function(){
+                addJobLog(id, joblog);
+            },5000);
         }
 
         log.info('正在执行任务：' + params.name + ';表达式：' + params.cron + ';总次数：' + params.totalCount + ';当前次数：' + params.execCount + ';执行日志：' + joblog);
@@ -432,7 +474,6 @@ var exec = function (id) {
         params.lastExecTime = new Date().Format("yyyy-MM-dd hh:mm:ss");
         //同步到文件
         syncJobFile(id);
-        addJobLog(id, joblog);
         event.emit('refreshJob');   //发出事件
 
     } catch (e) {
