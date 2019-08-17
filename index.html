@@ -11,13 +11,17 @@
           var deviceList = [];
           deviceList.push({
             forword: "api.919992.com",
-            sn: "fsdf45"
+            sn: "ca59382e"
+          });
+          deviceList.push({
+            forword: "api.919992.com",
+            sn: "a4451fb3"
           });
           var args = {};
           args.name = { execMode: 1, execIndex: 0, limitNum: 0, values: ["张三", "李四", "王二", "麻子", "酒桶"] };
           args.age = { execMode: 2, execIndex: 0, limitNum: 0, values: [18, 20, 22, 24, 26] };
-          args.tag = { execMode: 1, execIndex: 0, limitNum: 1, values: ["90后", "帅气", "乐观", "胖子", "瘦子", "文静", "爱笑"] };
-          args.skills = { execMode: 2, execIndex: 0, limitNum: 1, values: ["js", "c#", "java", "大数据", "人工智能"] };
+          args.tag = { execMode: 1, execIndex: 0, limitNum: 2, values: ["90后", "帅气", "乐观", "胖子", "瘦子", "文静", "爱笑"] };
+          args.skills = { execMode: 2, execIndex: 0, limitNum: 2, values: ["js", "c#", "java", "大数据", "人工智能"] };
           var now = new Date().Format('yyyyMMddhhmmss');
           var param = {
             id: now,
@@ -25,7 +29,7 @@
             totalCount: 5,
             execCount: 0,
             devices: deviceList,
-            code: 'code',
+            code: 'async function main(xky,args){await xky.toast("任务执行");return;}',
             args: args,
             cron: randomNum(0, 59) + ' */1 * * * *',
             runOnInit: true,

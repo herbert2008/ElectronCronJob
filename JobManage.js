@@ -438,7 +438,7 @@ var exec = function (id) {
                 },
                 json: true,
                 body: {
-                    "session": "session", //session_storage.getItem('xky_session'),
+                    "session": "85348db6a46d8acf", //session_storage.getItem('xky_session'),
                     "sn": item.sn,
                     "args": execArg,
                     "code": params.code,
@@ -449,9 +449,9 @@ var exec = function (id) {
             };
             //log.info(options);
             //执行
-            return;
+            //return;
             request.post(options, function (err, response, body) {
-
+                log.info('执行回调');
             })
         });
 
